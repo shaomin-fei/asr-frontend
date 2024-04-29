@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 import Layout from "./components/Layout";
 import {
@@ -42,6 +42,18 @@ function App() {
   );
   const [isStart, setIsStart] = useState(false);
   const [useLocal, setUseLocal] = useState(true);
+  useEffect(()=>{
+    let publicUrl=process.env.REACT_APP_PUBLIC_URL;
+    if(useLocal){
+      publicUrl=process.env.REACT_APP_PUBLIC_URL_LOCAL;
+    }
+    ort.env.wasm.wasmPaths = {
+      "ort-wasm-simd-threaded.wasm": `${publicUrl}/static/js/ort-wasm-simd-threaded.wasm`,
+      "ort-wasm-simd.wasm": `${publicUrl}/static/js/ort-wasm-simd.wasm`,
+      "ort-wasm.wasm": `${publicUrl}/static/js/ort-wasm.wasm`,
+      "ort-wasm-threaded.wasm": `${publicUrl}/static/js/ort-wasm-threaded.wasm`,
+    };
+  },[useLocal])
   // eslint-disable-next-line no-undef
   //const [voice, setVoice] = useState<SpeechSynthesisVoice | null>(null);
   const navigate = useNavigate();

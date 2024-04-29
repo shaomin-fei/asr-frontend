@@ -1,0 +1,8 @@
+1. Run on Linux
+a. install nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash 
+b. sudo apt update
+c. sudo apt install nodejs npm, here the nodejs is not the latest one
+d.nvm install 18
+e. nvm use 18
+f. need to restart vscode

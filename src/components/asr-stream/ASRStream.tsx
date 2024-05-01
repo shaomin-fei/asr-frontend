@@ -20,6 +20,8 @@ const ASRStream = () => {
     ? process.env.REACT_APP_ASR_STREAM_LOCAL
     : process.env.REACT_APP_ASR_STREAM_PUBLIC;
 
+  const workletUrl = process.env.REACT_APP_PUBLIC_URL_LOCAL;
+
   const {
     connectionStatus,
     isServerReadyForASR,
@@ -34,9 +36,10 @@ const ASRStream = () => {
       sampleRate: sampleRate,
     },
     redemptionFrames: endAfterMs / ms_each_frame, // By default it's 8
+    frameSamples: 512,
     startOnLoad: false,
-    workletURL: `${process.env.REACT_APP_PUBLIC_URL}/vad.worklet.bundle.min.js`,
-    modelURL: `${process.env.REACT_APP_PUBLIC_URL}/silero_vad.onnx`,
+    workletURL: `${workletUrl}/vad.worklet.bundle.min.js`,
+    modelURL: `${workletUrl}/silero_vad.onnx`,
     onSpeechStart: () => {
       setStatus("speaking");
     },

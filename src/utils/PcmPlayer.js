@@ -15,6 +15,8 @@ PCMPlayer.prototype.init = function (option) {
   this.interval = setInterval(this.flush, this.option.flushingTime);
   this.maxValue = this.getMaxValue();
   this.typedArray = this.getTypedArray();
+  this.onEnd = undefined;
+  this.streamFinished = false;
   this.createContext();
 };
 
@@ -146,4 +148,8 @@ PCMPlayer.prototype.flush = function () {
   bufferSource.start(this.startTime);
   this.startTime += audioBuffer.duration;
   this.samples = new Float32Array();
+  if (this.streamFinished && this.onEnd) {
+    // this is the last buffer
+    bufferSource.onended = this.onEnd;
+  }
 };

@@ -5,7 +5,7 @@ import { base64ToBytes } from "./audio";
 
 // import useAudioPlayer from "./useAudioPlayer";
 
-const player = new PCMPlayer({
+const initPlayer = new PCMPlayer({
   encoding: "16bitInt",
   channels: 1,
   sampleRate: 24000,
@@ -14,6 +14,7 @@ const player = new PCMPlayer({
 
 const useTTS = (url: string) => {
   const [messages, setMessages] = useState<MessageEvent<any>[]>([]);
+  const [isReading, setIsReading] = useState(false);
   const { sendJsonMessage, readyState, getWebSocket } = useWebSocket(url, {
     shouldReconnect: () => true,
     reconnectInterval: 100,
@@ -29,6 +30,8 @@ const useTTS = (url: string) => {
   const [ttsWords, setTTSWords] = useState("");
   const [ttsSession, setTTSSession] = useState("");
   const [lastPackage, setLastPackage] = useState(false);
+  const [player] = useState(initPlayer);
+  const [counter, setCounter] = useState(-1);
   // const [audioList, setAudioList] = useState<string[]>([]);
   const connectionStatus = {
     [ReadyState.CONNECTING]: "Connecting",
@@ -37,6 +40,23 @@ const useTTS = (url: string) => {
     [ReadyState.CLOSED]: "Closed",
     [ReadyState.UNINSTANTIATED]: "Uninstantiated",
   }[readyState];
+
+  console.log(`render counter=${counter}`);
+  const ttsReadEnd = () => {
+    setIsReading(() => {
+      return false;
+    });
+    setCounter((x) => x + 1);
+  };
+
+  // we have to give player.onEnd a new value every time it's re-rendered, otherwise
+  // the staled information will be used in the callback, which causes a lot of unexpected problem
+
+  //  if (!player.onEnd) {
+  //    player.onEnd = ttsReadEnd;
+  //  }
+  player.onEnd = ttsReadEnd;
+  //console.log(`useTTS isReading=${isReading}`);
   //const { addAudioBase64 } = useAudioPlayer();
   const readText = useCallback(
     async (words: string, ttsConnectionStatus: string = "Open") => {
@@ -44,10 +64,13 @@ const useTTS = (url: string) => {
         console.log("tts disconnected");
         return;
       }
+      setCounter((x) => x + 1);
+      player.streamFinished = false;
+      setIsReading(true);
       setTTSWords(words);
       sendJsonMessage({ task: "tts", signal: "start" });
     },
-    [sendJsonMessage],
+    [sendJsonMessage, player],
   );
 
   useEffect(() => {
@@ -72,7 +95,7 @@ const useTTS = (url: string) => {
         // play audio here
         if (!data["audio"]) {
           // empty audio, normally it happens when it's the last package
-          return;
+          continue;
         }
         const pcm_data = base64ToBytes(data["audio"]);
         player.feed(pcm_data);
@@ -92,10 +115,16 @@ const useTTS = (url: string) => {
         setTTSWords("");
         setLastPackage(false);
         getWebSocket()?.close();
+        player.streamFinished = true;
+        // we need to feed some silent data to ensure the onEnd will be triggered
+        // the reason is, when we detect if it's necessary to add listener to onend event,
+        // it's possible that it happens before streamFinished is set to true.
+        const silentData = new Uint8Array(512);
+        player.feed(silentData);
       }
       setMessages([]);
     }
-  }, [ttsWords, sendJsonMessage, getWebSocket, messages]);
+  }, [ttsWords, sendJsonMessage, getWebSocket, messages, player]);
 
   useEffect(() => {
     if (lastPackage && ttsSession) {
@@ -109,6 +138,6 @@ const useTTS = (url: string) => {
     }
   }, [sendJsonMessage, ttsSession, lastPackage]);
 
-  return { readText, connectionStatus };
+  return { readText, connectionStatus, isReading };
 };
 export default useTTS;

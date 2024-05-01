@@ -11,8 +11,8 @@ import useTTS from "../../utils/useTTS";
 import TTS from "../TTS";
 
 const audioFileMap = {
-  wakeup: `${process.env.REACT_APP_PUBLIC_URL}/asset/wav/wakeup.wav`,
-  taskSuccess: `${process.env.REACT_APP_PUBLIC_URL}/asset/wav/task_success.wav`,
+  wakeup: `${process.env.REACT_APP_PUBLIC_URL_LOCAL}/asset/wav/wakeup.wav`,
+  taskSuccess: `${process.env.REACT_APP_PUBLIC_URL_LOCAL}/asset/wav/task_success.wav`,
 };
 export enum FunctionOptions {
   CMD = "CMD",
@@ -46,7 +46,9 @@ const RecordingCmd = () => {
     ? process.env.REACT_APP_TTS_LOCAL
     : process.env.REACT_APP_TTS_PUBLIC;
 
-  const { readText, connectionStatus } = useTTS(ttsUrl || "");
+  const workletUrl = process.env.REACT_APP_PUBLIC_URL_LOCAL;
+
+  const { readText, connectionStatus, isReading } = useTTS(ttsUrl || "");
 
   useEffect(() => {
     if (!wakeUp || !startCountWakeupTime) {
@@ -68,14 +70,16 @@ const RecordingCmd = () => {
 
   //  console.log("inside component");
   //  console.log(ort.env.wasm.wasmPaths);
+
+  // NOTICE: vad will be changed in each re-render
   const vad = useMicVAD({
     additionalAudioConstraints: {
       sampleRate: sampleRate,
     },
     redemptionFrames: endAfterMs / ms_each_frame, // By default it's 8
     startOnLoad: false,
-    workletURL: `${process.env.REACT_APP_PUBLIC_URL}/vad.worklet.bundle.min.js`,
-    modelURL: `${process.env.REACT_APP_PUBLIC_URL}/silero_vad.onnx`,
+    workletURL: `${workletUrl}/vad.worklet.bundle.min.js`,
+    modelURL: `${workletUrl}/silero_vad.onnx`,
     onSpeechStart: () => {
       setStatus("speaking");
       if (wakeUp) {
@@ -85,6 +89,10 @@ const RecordingCmd = () => {
     },
     onVADMisfire: async () => {
       setStatus("not speaking");
+      if (wakeUp) {
+        silence_for_second = 0;
+        setStartCountWakeupTime(true);
+      }
     },
     onSpeechEnd: async (audio: Float32Array) => {
       setStatus("not speaking");
@@ -101,6 +109,7 @@ const RecordingCmd = () => {
           if (result.isWakeUp) {
             setWakeup(true);
             setPlayAudioFile(audioFileMap.wakeup);
+            setStartCountWakeupTime(true);
           }
         } else {
           // for test reason, show wav player
@@ -145,17 +154,25 @@ const RecordingCmd = () => {
 
           setCmd(parameters);
           console.log(res);
-          setStartCountWakeupTime(true);
           if (res.success && !res.ttsMessage) {
             setPlayAudioFile(audioFileMap.taskSuccess);
           }
           if (res.ttsMessage) {
+            vad.pause();
             readText(res.ttsMessage);
           }
+        }
+        if (wakeUp) {
+          setStartCountWakeupTime(true);
         }
       }
     },
   });
+  useEffect(() => {
+    if (isStart && !isReading) {
+      vad.start();
+    }
+  }, [isReading, isStart]); // don't add vad, it's always changed
   const handleButtonClicked = () => {
     if (!isStart) {
       setIsStart(true);

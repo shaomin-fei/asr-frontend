@@ -1,8 +1,16 @@
 1. Run on Linux
-a. install nvm
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash 
-b. sudo apt update
-c. sudo apt install nodejs npm, here the nodejs is not the latest one
-d.nvm install 18
-e. nvm use 18
-f. need to restart vscode
+   a. install nvm
+   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+   b. sudo apt update
+   c. sudo apt install nodejs npm, here the nodejs is not the latest one
+   d.nvm install 18
+   e. nvm use 18
+   f. need to restart vscode
+
+2. ws over https
+   Normally ws works over http and wss works over https. If it's http and the web app is hosted on the remote computer, medias can't be used, which means we can't record.
+
+The solution is to run front end over https, but since Chrome forbids ws from working on https, we need to change its configuration so the media can work over http.(the configuratin on different browsers is different)
+https://stackoverflow.com/questions/60957829/navigator-mediadevices-is-undefined
+
+add http://4.229.227.34:3000/ and enable it

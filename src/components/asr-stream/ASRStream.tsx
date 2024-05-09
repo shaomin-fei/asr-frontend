@@ -20,7 +20,9 @@ const ASRStream = () => {
     ? process.env.REACT_APP_ASR_STREAM_LOCAL
     : process.env.REACT_APP_ASR_STREAM_PUBLIC;
 
-  const workletUrl = process.env.REACT_APP_PUBLIC_URL_LOCAL;
+    const workletUrl = useLocal
+    ? process.env.REACT_APP_PUBLIC_URL_LOCAL
+    : process.env.REACT_APP_PUBLIC_URL;
 
   const {
     connectionStatus,

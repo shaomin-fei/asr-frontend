@@ -10,10 +10,7 @@ import { convertToWavFile } from "../../utils/audio";
 import useTTS from "../../utils/useTTS";
 import TTS from "../TTS";
 
-const audioFileMap = {
-  wakeup: `${process.env.REACT_APP_PUBLIC_URL_LOCAL}/asset/wav/wakeup.wav`,
-  taskSuccess: `${process.env.REACT_APP_PUBLIC_URL_LOCAL}/asset/wav/task_success.wav`,
-};
+
 export enum FunctionOptions {
   CMD = "CMD",
   ASR = "ASR",
@@ -46,7 +43,14 @@ const RecordingCmd = () => {
     ? process.env.REACT_APP_TTS_LOCAL
     : process.env.REACT_APP_TTS_PUBLIC;
 
-  const workletUrl = process.env.REACT_APP_PUBLIC_URL_LOCAL;
+    const workletUrl = useLocal
+    ? process.env.REACT_APP_PUBLIC_URL_LOCAL
+    : process.env.REACT_APP_PUBLIC_URL;
+
+    const audioFileMap = {
+      wakeup: `${workletUrl}/asset/wav/wakeup.wav`,
+      taskSuccess: `${workletUrl}/asset/wav/task_success.wav`,
+    };
 
   const { readText, connectionStatus, isReading } = useTTS(ttsUrl || "");
 
